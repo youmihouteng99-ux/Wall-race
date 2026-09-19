@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b16">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WALL RACE">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>12×12 頭脳戦・壁ありレース</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg1:#070b16;--bg2:#111a2e;--panel:rgba(17,25,43,.78);--line:rgba(255,255,255,.11);
+  --text:#f4f7ff;--muted:#9eabc4;--blue:#4da3ff;--red:#ff5570;--gold:#ffd45a;
+}
+html{min-height:100%;background:var(--bg1)}
+body{
+  min-height:100vh;margin:0;padding:24px 14px 34px;color:var(--text);text-align:center;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(61,120,255,.23),transparent 38%),
+    radial-gradient(circle at 10% 90%,rgba(255,74,105,.10),transparent 30%),
+    linear-gradient(145deg,var(--bg1),var(--bg2));
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.28;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:32px 32px}
+h1{position:relative;margin:0 0 7px;font-size:clamp(25px,4vw,38px);font-weight:900;letter-spacing:.04em;text-shadow:0 4px 24px rgba(67,142,255,.28)}
+.subtitle{position:relative;color:var(--muted);font-size:13px;margin-bottom:18px;letter-spacing:.08em}
+#info{
+  position:relative;width:min(92vw,760px);margin:0 auto 12px;padding:11px 14px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(14px);box-shadow:0 14px 40px rgba(0,0,0,.28)
+}
+#info span{padding:7px 13px;border-radius:10px;background:rgba(255,255,255,.045);font-size:15px;font-weight:700}
+.p1{color:#69b5ff}.p2{color:#ff7187}
+#turnText{padding:2px 7px;border-radius:7px;background:rgba(255,255,255,.07)}
+#status{
+  position:relative;width:min(92vw,760px);min-height:42px;margin:0 auto 13px;padding:10px 15px;display:flex;align-items:center;justify-content:center;
+  color:#eaf0ff;font-weight:800;font-size:14px;background:rgba(12,18,33,.78);border:1px solid rgba(120,160,230,.16);border-radius:12px;
+}
+.controls{position:relative;display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:0 auto 15px}
+button{
+  border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;color:#e9efff;
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.055));box-shadow:0 7px 20px rgba(0,0,0,.2);transition:transform .12s,background .12s,border-color .12s,box-shadow .12s
+}
+button:hover:not(:disabled){transform:translateY(-2px);background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.24)}
+button:active:not(:disabled){transform:translateY(0)}
+button.active{background:linear-gradient(180deg,#4c91ff,#2866d9);border-color:#78b1ff;box-shadow:0 0 0 2px rgba(77,163,255,.18),0 8px 25px rgba(30,100,220,.32)}
+button:disabled{opacity:.35;cursor:not-allowed}
+#board{
+  position:relative;width:min(88vw,700px);height:min(88vw,700px);margin:0 auto 18px;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(12,1fr);gap:0;
+  padding:4px;border-radius:18px;background:linear-gradient(145deg,#263a5b,#111b30);border:1px solid rgba(135,177,255,.32);
+  box-shadow:0 22px 65px rgba(0,0,0,.55),0 0 0 7px rgba(77,163,255,.045),inset 0 1px 0 rgba(255,255,255,.13);touch-action:none;overflow:visible
+}
+.cell{
+  position:relative;background:linear-gradient(145deg,#17243b,#101b2f);border:1px solid rgba(133,165,214,.13);cursor:pointer;user-select:none;transition:background .12s,transform .12s;isolation:isolate
+}
+.cell:hover{background:linear-gradient(145deg,#213455,#172742)}
+.cell:nth-child(12n+1){border-left-color:rgba(133,165,214,.22)}
+.cell:nth-child(-n+12){border-top-color:rgba(133,165,214,.22)}
+.piece{
+  position:absolute;inset:16%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.4vw,12px);font-weight:950;color:#fff;z-index:30;pointer-events:none;
+  border:2px solid rgba(255,255,255,.72);box-shadow:0 5px 13px rgba(0,0,0,.42),inset 0 2px 5px rgba(255,255,255,.35);letter-spacing:-.03em
+}
+.piece.p1{background:radial-gradient(circle at 35% 28%,#b9e1ff 0,#55adff 28%,#1768d5 72%,#0c438f 100%);box-shadow:0 0 20px rgba(53,155,255,.55),0 5px 13px rgba(0,0,0,.45),inset 0 2px 5px rgba(255,255,255,.38)}
+.piece.enter{animation:piecePop .22s cubic-bezier(.2,.9,.3,1.25)}
+.wall.enter{animation:wallBuild .22s ease-out}
+.timerBox.timerDanger{color:#ff667d;border-color:rgba(255,90,115,.5);animation:timerPulse .45s ease-in-out infinite alternate}
+#status.winStatus{min-height:64px;font-size:19px;background:linear-gradient(145deg,rgba(34,61,105,.92),rgba(16,27,50,.92));border-color:rgba(130,190,255,.38);box-shadow:0 0 0 2px rgba(77,163,255,.08),0 16px 45px rgba(0,0,0,.34);animation:winPop .35s cubic-bezier(.2,.9,.3,1.15)}
+.winIcon{font-size:27px;margin-right:8px;display:inline-block;animation:trophyBounce .55s ease-out}
+@keyframes piecePop{0%{transform:scale(.65);opacity:.25}65%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes wallBuild{0%{transform:scaleX(.15);opacity:.15}100%{transform:scaleX(1);opacity:1}}
+.wall.v.enter{animation-name:wallBuildV}
+@keyframes wallBuildV{0%{transform:scaleY(.15);opacity:.15}100%{transform:scaleY(1);opacity:1}}
+@keyframes timerPulse{to{transform:scale(1.06)}}
+@keyframes winPop{0%{transform:scale(.96);opacity:.4}100%{transform:scale(1);opacity:1}}
+@keyframes trophyBounce{0%{transform:scale(.4) rotate(-12deg)}60%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1)}}
+.piece.p2{background:radial-gradient(circle at 35% 28%,#ffd0d8 0,#ff6d86 28%,#d82e50 72%,#8d1631 100%);box-shadow:0 0 20px rgba(255,71,103,.52),0 5px 13px rgba(0,0,0,.45),inset 0 2px 5px rgba(255,255,255,.38)}
+.wall{position:absolute;background:linear-gradient(90deg,#111827,#64748b,#111827);z-index:20;border-radius:5px;pointer-events:none;box-shadow:0 2px 7px rgba(0,0,0,.75),0 0 7px rgba(160,185,220,.16);border:1px solid rgba(255,255,255,.18)}
+.wall.h{height:8px;left:-1px;width:calc(100% + 2px);bottom:-4px}
+.wall.v{width:8px;top:-1px;height:calc(100% + 2px);right:-4px}
+.preview{position:absolute;background:linear-gradient(90deg,#46e89a,#a7ffd1,#46e89a);z-index:25;border-radius:5px;pointer-events:none;opacity:.78;box-shadow:0 0 14px rgba(70,232,154,.7)}
+.preview.h{height:8px;left:-1px;width:calc(100% + 2px);bottom:-4px}
+.preview.v{width:8px;top:-1px;height:calc(100% + 2px);right:-4px}
+.cell.wall-start{background:linear-gradient(145deg,rgba(255,202,70,.34),rgba(104,74,16,.45));outline:2px solid var(--gold);outline-offset:-2px;box-shadow:inset 0 0 22px rgba(255,206,77,.13)}
+.cell.wall-target{background:linear-gradient(145deg,rgba(54,221,143,.25),rgba(16,78,53,.38));outline:2px dashed #55eaa3;outline-offset:-2px}
+.cell.wall-invalid{background:linear-gradient(145deg,rgba(255,75,96,.22),rgba(100,24,35,.38));outline:2px dashed #ff687b;outline-offset:-2px}
+.note{
+  position:relative;width:min(92vw,760px);margin:0 auto;color:#aebbd2;font-size:12px;line-height:1.8;padding:13px 17px;text-align:left;
+  background:rgba(12,18,32,.62);border:1px solid rgba(255,255,255,.08);border-radius:13px
+}
+.note strong{color:#dce7ff}
+@media(max-width:520px){
+  body{padding-top:17px}.controls{gap:7px}.controls button{padding:9px 11px;font-size:13px}#info{gap:6px;padding:8px}.info span{font-size:13px}
+  #board{width:min(94vw,700px);height:min(94vw,700px);padding:3px;border-radius:13px}.piece{inset:18%}
+}
+
+/* ===== TITLE SCREEN ===== */
+#titleScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 35%,rgba(55,116,255,.20),transparent 34%),linear-gradient(145deg,#050811,#0c1426 55%,#080c18);overflow:hidden}
+#titleScreen.hidden{display:none}
+#titleScreen:before,#titleScreen:after{content:"";pointer-events:none;position:absolute;width:520px;height:520px;border:1px solid rgba(110,170,255,.12);border-radius:50%;animation:titlePulse 5s ease-in-out infinite}
+#titleScreen:after{width:760px;height:760px;animation-delay:-2.5s}
+.titleCard{position:relative;z-index:2;width:min(92vw,720px);padding:52px 28px 40px;border:1px solid rgba(130,180,255,.25);border-radius:28px;background:rgba(10,17,32,.78);backdrop-filter:blur(18px);box-shadow:0 30px 100px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.10);text-align:center}
+.titleKicker{font-size:12px;letter-spacing:.32em;color:#8ea8d3;font-weight:800;margin-bottom:18px}
+.gameTitle{margin:0;font-size:clamp(38px,8vw,76px);font-weight:1000;letter-spacing:.04em;line-height:1.05;background:linear-gradient(180deg,#fff,#8dc4ff 55%,#4d8df0);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 10px 40px rgba(66,140,255,.22)}
+.titleJP{margin:12px 0 8px;font-size:clamp(19px,4vw,30px);font-weight:900;color:#eef5ff;letter-spacing:.12em}
+.titleDesc{color:#91a2bf;font-size:13px;letter-spacing:.08em;margin:0 auto 30px}
+#startBtn{font-size:17px;padding:15px 38px;border-radius:14px;background:linear-gradient(180deg,#5aa8ff,#2c68d8);border-color:#8bc5ff;box-shadow:0 0 0 2px rgba(77,163,255,.14),0 12px 35px rgba(34,105,225,.35);min-width:220px}
+#startBtn:hover{transform:translateY(-3px);box-shadow:0 0 0 3px rgba(77,163,255,.18),0 16px 40px rgba(34,105,225,.45)}
+.modeSelect{display:flex;justify-content:center;gap:10px;margin:0 auto 18px}.modeChoice{min-width:145px;padding:11px 14px}.modeChoice.active{background:linear-gradient(180deg,#4c91ff,#2866d9);border-color:#78b1ff;box-shadow:0 0 0 2px rgba(77,163,255,.18),0 8px 25px rgba(30,100,220,.28)}.mainModeSelect{margin-bottom:12px}.mainModeSelect .modeChoice{min-width:165px;font-size:15px}.localModePanel{width:min(92vw,560px);margin:0 auto 18px;padding:12px 14px;border:1px solid rgba(130,180,255,.16);border-radius:15px;background:rgba(255,255,255,.025)}.cpuModePanel{width:min(92vw,560px);margin:0 auto 18px;padding:12px 14px;border:1px solid rgba(130,180,255,.16);border-radius:15px;background:rgba(255,255,255,.025)}.cpuModePanel.hiddenPanel{display:none}.localModePanel.hiddenPanel{display:none}.localModeTitle{font-size:11px;letter-spacing:.16em;color:#91a5c7;font-weight:800;margin-bottom:9px}.subModeSelect{margin:0;gap:7px}.subModeSelect .modeChoice{min-width:120px;padding:9px 12px;font-size:13px}
+.titleHint{margin-top:18px;color:#687895;font-size:11px}
+.onlinePanel{width:min(92vw,560px);margin:0 auto 18px;padding:16px;border:1px solid rgba(130,180,255,.18);border-radius:16px;background:rgba(255,255,255,.035)}
+.hiddenPanel{display:none}
+#titleReturnBtn{position:fixed;right:16px;bottom:16px;z-index:1000}
+#titleReturnBtn.hiddenPanel{display:none}
+.onlineTitle{font-size:12px;letter-spacing:.18em;color:#9eb7df;font-weight:900;margin-bottom:12px}.onlineActions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.roomBox{margin-top:12px;padding:13px;border-radius:12px;background:rgba(0,0,0,.18)}.roomLabel{font-size:11px;color:#93a3bf;margin-bottom:7px}.roomCode{font-size:30px;font-weight:1000;letter-spacing:.18em;color:#fff;margin:2px 0 5px}.roomWait,.onlineStatus{font-size:11px;color:#8fa0bc;line-height:1.7}.onlineModeTitle{font-size:11px;color:#91a5c7;font-weight:800;letter-spacing:.12em;margin:12px 0 8px}.onlineModeSelect{display:flex;justify-content:center;gap:7px;flex-wrap:wrap}.onlineModeSelect .modeChoice{min-width:115px;padding:9px 10px;font-size:12px}.onlineModeSelect .modeChoice.active{background:linear-gradient(180deg,#4c91ff,#2866d9);border-color:#78b1ff}.roomBox input{width:180px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#0d1525;color:#fff;text-align:center;font-size:18px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;margin-right:7px}
+
+.timerBox{color:#ffd45a}.timerBox.hidden,.abilityBox.hidden{display:none}
+.gameEndActions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px auto 0}.gameEndActions button{display:none}.gameEndActions button.show{display:inline-block}.rematchInfo{font-size:12px;color:#9eb0cc;margin-top:8px;line-height:1.6}.rematchInfo.hidden{display:none}.abilityBox{color:#b9e1ff}.gimmickCell{background:radial-gradient(circle,rgba(255,215,80,.24),rgba(38,35,13,.18));box-shadow:inset 0 0 20px rgba(255,214,75,.13)}.gimmickIcon{position:absolute;inset:20%;display:flex;align-items:center;justify-content:center;font-size:clamp(15px,2.5vw,25px);z-index:8;pointer-events:none;filter:drop-shadow(0 0 7px rgba(255,220,90,.55))}.abilityReady{outline:2px solid #7fe4ff;outline-offset:-3px}
+@keyframes titlePulse{50%{transform:scale(1.08);opacity:.55}}
+
+/* ===== SOUND BUTTON ===== */
+#soundBtn,#bgmBtn{position:fixed;z-index:100;color:#dce9ff;padding:8px 11px;border-radius:10px;font-size:13px}#soundBtn{right:14px;top:14px}#bgmBtn{right:14px;top:54px}
+@media(max-width:520px){.titleCard{padding:40px 18px 32px}.gameTitle{font-size:42px}}
+
+
+/* ===== SMARTPHONE OPTIMIZATION ===== */
+html,body{
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+button,input{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (max-width:700px){
+  body{
+    padding:12px 7px calc(24px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+  }
+  h1{font-size:25px}
+  .subtitle{font-size:11px;margin-bottom:10px}
+  #info{
+    width:96vw;
+    gap:4px;
+    padding:6px;
+    border-radius:12px;
+  }
+  #info span{
+    padding:6px 8px;
+    font-size:12px;
+  }
+  #status{
+    width:96vw;
+    min-height:38px;
+    padding:8px 10px;
+    font-size:12px;
+    margin-bottom:9px;
+  }
+  .controls{
+    width:96vw;
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .controls button{
+    flex:1 1 auto;
+    min-height:42px;
+    padding:9px 8px;
+    font-size:12px;
+  }
+  #board{
+    width:min(96vw,700px);
+    height:min(96vw,700px);
+    padding:2px;
+    border-radius:12px;
+    margin-bottom:10px;
+  }
+  .cell{cursor:default}
+  .piece{
+    inset:17%;
+    font-size:9px;
+    border-width:1.5px;
+  }
+  .wall{border-radius:4px}
+  .wall.h,.preview.h{height:7px}
+  .wall.v,.preview.v{width:7px}
+  .gimmickIcon{
+    font-size:clamp(13px,5vw,22px);
+  }
+  .note{
+    width:96vw;
+    padding:10px 12px;
+    font-size:11px;
+  }
+  #soundBtn,#bgmBtn{
+    position:fixed;
+    right:8px;
+    padding:7px 9px;
+    font-size:11px;
+  }
+  #soundBtn{top:8px}
+  #bgmBtn{top:45px}
+  #titleScreen{
+    align-items:flex-start;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px 8px calc(20px + env(safe-area-inset-bottom));
+  }
+  .titleCard{
+    width:96vw;
+    max-height:none;
+    margin:auto 0;
+    padding:30px 12px 24px;
+    border-radius:20px;
+  }
+  .titleKicker{font-size:9px;margin-bottom:10px}
+  .gameTitle{font-size:42px}
+  .titleJP{font-size:18px;margin:8px 0 6px}
+  .titleDesc{font-size:10px;margin-bottom:18px}
+  .mainModeSelect{
+    gap:5px;
+  }
+  .mainModeSelect .modeChoice{
+    min-width:0;
+    flex:1;
+    padding:10px 5px;
+    font-size:12px;
+  }
+  .localModePanel,.cpuModePanel,.onlinePanel{
+    width:100%;
+    padding:10px;
+    margin-bottom:12px;
+  }
+  .subModeSelect,.onlineModeSelect{
+    gap:5px;
+  }
+  .subModeSelect .modeChoice,.onlineModeSelect .modeChoice{
+    min-width:0;
+    flex:1;
+    padding:9px 5px;
+    font-size:11px;
+  }
+  #startBtn{
+    width:100%;
+    min-width:0;
+    padding:13px 20px;
+    font-size:16px;
+  }
+  .onlineActions{
+    gap:6px;
+  }
+  .onlineActions button{
+    flex:1 1 45%;
+    min-height:42px;
+  }
+  .roomBox input{
+    width:100%;
+    margin:0 0 7px;
+    font-size:17px;
+  }
+  #titleReturnBtn{
+    right:8px;
+    bottom:calc(8px + env(safe-area-inset-bottom));
+    padding:8px 10px;
+    font-size:11px;
+  }
+}
+@media (max-width:380px){
+  #board{
+    width:94vw;
+    height:94vw;
+  }
+  #info span{
+    font-size:11px;
+    padding:5px 6px;
+  }
+  .controls button{
+    font-size:11px;
+    padding:8px 5px;
+  }
+  .gameTitle{font-size:38px}
+  .titleJP{font-size:16px}
+}
+@media (max-height:700px) and (max-width:700px){
+  #titleScreen{align-items:flex-start}
+  .titleCard{margin:8px 0}
+}
+
+</style>
+</head>
+<body>
+<div id="titleScreen">
+  <div class="titleCard">
+    <div class="titleKicker">TACTICAL BOARD GAME</div>
+    <h2 class="gameTitle">WALL RACE</h2>
+    <div class="titleJP">12×12 頭脳戦・壁ありレース</div>
+    <p class="titleDesc">MOVE OR BUILD • ONE TURN AT A TIME</p>
+    <div class="modeSelect mainModeSelect"><button id="localBtn" class="modeChoice active">👥 同一端末</button><button id="cpuBtn" class="modeChoice">🤖 CPU対戦</button><button id="onlineBtn" class="modeChoice">🌐 オンライン</button></div>
+    <div id="localModePanel" class="localModePanel">
+      <div class="localModeTitle">同一端末のルールを選択</div>
+      <div class="modeSelect subModeSelect"><button id="normalBtn" class="modeChoice active">🟢 ノーマル</button><button id="gimmickBtn" class="modeChoice">✨ ギミック</button><button id="hardBtn" class="modeChoice">🔥 ハード</button></div>
+    </div>
+    <div id="cpuModePanel" class="cpuModePanel hiddenPanel">
+      <div class="localModeTitle">CPU対戦のルールを選択</div>
+      <div class="modeSelect subModeSelect"><button id="cpuNormalBtn" class="modeChoice active">🟢 ノーマル</button><button id="cpuHardBtn" class="modeChoice">🔥 ハード</button></div>
+    </div>
+    <div id="onlinePanel" class="onlinePanel hiddenPanel">
+      <div class="onlineTitle">🌐 ONLINE ROOM</div>
+      <div class="onlineActions"><button id="createRoomBtn">＋ ルームを作る</button><button id="joinRoomBtn">🔗 ルームに参加</button></div>
+      <div id="roomCreateBox" class="roomBox hiddenPanel"><div class="roomLabel">あなたのルームコード</div><div id="roomCode" class="roomCode">------</div><div class="roomWait">このコードを友達に送ってください。<br>先にゲームモードを選び、友達が参加すると対戦開始できます。</div><div class="onlineModeTitle">ゲームモードを選択</div><div class="onlineModeSelect"><button id="onlineNormalBtn" class="modeChoice active">🟢 ノーマル</button><button id="onlineGimmickBtn" class="modeChoice">✨ ギミック</button><button id="onlineHardBtn" class="modeChoice">🔥 ハード</button></div></div>
+      <div id="roomJoinBox" class="roomBox hiddenPanel"><div class="roomLabel">友達のルームコード</div><input id="roomInput" maxlength="6" placeholder="例：A7K3P9" autocomplete="off"><button id="connectRoomBtn">参加する</button></div>
+      <div id="onlineStatus" class="onlineStatus">オンラインモードを選択してください。</div>
+    </div>
+    <button id="startBtn">▶ GAME START</button>
+    <div class="titleHint">P1 vs P2　｜　移動か壁か、次の一手を選べ。<br><span id="modeHint">ノーマル：従来ルール</span></div>
+  </div>
+</div>
+<button id="soundBtn" aria-label="効果音切替">🔊 ON</button><button id="bgmBtn" aria-label="BGM切替">🎵 BGM ON</button>
+
+<h1>🏁 12×12 頭脳戦・壁ありレース</h1>
+<div class="subtitle">TACTICAL BOARD • MOVE OR BUILD • ONE TURN AT A TIME</div>
+<div id="info">
+  <span class="p1">🔵 P1 壁：<b id="w1">7</b></span>
+  <span class="p2">🔴 P2 壁：<b id="w2">7</b></span>
+  <span>現在：<b id="turnText">P1</b></span>
+  <span id="timerBox" class="timerBox hidden">⏱️ <b id="timerText">10</b>秒</span>
+  <span id="abilityBox" class="abilityBox hidden">能力：<b id="abilityText">なし</b></span>
+</div>
+<div class="controls">
+  <button id="moveBtn" class="active">🚶 移動</button>
+  <button id="wallBtn">🧱 壁を描く</button>
+  <button id="cancelBtn">↩ 壁選択を取消</button>
+  <button id="resetBtn">🔄 リセット</button>
+  <button id="titleReturnBtn" class="hiddenPanel">🏠 タイトルへ戻る</button>
+  <button id="surrenderBtn" class="hiddenPanel">🏳️ 降参</button>
+  <button id="rematchBtn" class="hiddenPanel">🔁 もう一度</button>
+  <div id="rematchInfo" class="rematchInfo hidden">もう一度を押すと再戦できます。5秒以内に両者が押さなければタイトルへ戻ります。</div>
+</div>
+<div id="status">P1の番です。移動するか「壁を描く」を選んでください。</div>
+<div id="board"></div>
+<div class="note">
+12×12マス。P1は上、P2は下から開始。相手側の端に先に到達したプレイヤーの勝利。<br>
+<strong>壁モード：</strong>マスを1回クリックして始点を決め、上下左右の隣のマスをクリックすると、その方向に<strong>2マス分の壁</strong>を置きます。<br>
+<strong>始点から隣のマスへドラッグして離してもOK。</strong>壁を1枚置いたら即ターン交代します。壁は<strong>置ける場所の制限なし</strong>です（壁の枚数だけ制限）。
+</div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js">window.addEventListener("beforeunload",()=>stopBGM());
+</script>
+<script>
+const N=12;
+const board=document.getElementById("board");
+const statusEl=document.getElementById("status");
+const turnText=document.getElementById("turnText");
+const w1El=document.getElementById("w1");
+const w2El=document.getElementById("w2");
+const moveBtn=document.getElementById("moveBtn");
+const wallBtn=document.getElementById("wallBtn");
+const cancelBtn=document.getElementById("cancelBtn");
+const titleScreen=document.getElementById("titleScreen");
+const startBtn=document.getElementById("startBtn");
+const localBtn=document.getElementById("localBtn");
+const localModePanel=document.getElementById("localModePanel");
+const cpuModePanel=document.getElementById("cpuModePanel");
+const normalBtn=document.getElementById("normalBtn");
+const hardBtn=document.getElementById("hardBtn");
+const gimmickBtn=document.getElementById("gimmickBtn");
+const cpuNormalBtn=document.getElementById("cpuNormalBtn");
+const cpuHardBtn=document.getElementById("cpuHardBtn");
+const cpuBtn=document.getElementById("cpuBtn");
+const onlineBtn=document.getElementById("onlineBtn");
+const onlineNormalBtn=document.getElementById("onlineNormalBtn");
+const onlineGimmickBtn=document.getElementById("onlineGimmickBtn");
+const onlineHardBtn=document.getElementById("onlineHardBtn");
+const onlinePanel=document.getElementById("onlinePanel");
+const createRoomBtn=document.getElementById("createRoomBtn");
+const joinRoomBtn=document.getElementById("joinRoomBtn");
+const roomCreateBox=document.getElementById("roomCreateBox");
+const roomJoinBox=document.getElementById("roomJoinBox");
+const roomCodeEl=document.getElementById("roomCode");
+const roomInput=document.getElementById("roomInput");
+const connectRoomBtn=document.getElementById("connectRoomBtn");
+const onlineStatusEl=document.getElementById("onlineStatus");
+const titleReturnBtn=document.getElementById("titleReturnBtn");
+const surrenderBtn=document.getElementById("surrenderBtn");
+const rematchBtn=document.getElementById("rematchBtn");
+const rematchInfo=document.getElementById("rematchInfo");
+const soundBtn=document.getElementById("soundBtn");
+const bgmBtn=document.getElementById("bgmBtn");
+const timerBox=document.getElementById("timerBox");
+const timerText=document.getElementById("timerText");
+const abilityBox=document.getElementById("abilityBox");
+const abilityText=document.getElementById("abilityText");
+const modeHint=document.getElementById("modeHint");
+let audioCtx=null;
+let soundOn=true;
+let bgmOn=true;
+let bgmTimer=null;
+let bgmStep=0;
+let hardMode=false;
+let gimmickMode=false;
+let cpuMode=false;
+let cpuHardMode=false;
+let timerId=null;
+let timeLeft=10;
+let abilities=[null,null];
+let gimmicks=[];
+let cpuThinking=false;
+let cpuTurnToken=0;
+let pendingPieceAnim=-1;
+let pendingWallAnim=null;
+
+// ===== ONLINE ROOM STATE =====
+let peer=null;
+let conn=null;
+let onlineMode=false;
+let onlineRole=null; // host = P1 / guest = P2
+let onlineConnected=false;
+let onlineGameStarted=false;
+let onlineRoomCode="";
+let onlineSelectedMode="normal";
+let onlineRematchTimer=null;
+let onlineRematch={host:false,guest:false};
+
+function initAudio(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+}
+function tone(freq,duration=.08,type="sine",volume=.035,delay=0){
+  if(!soundOn||!audioCtx)return;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime+delay);
+  g.gain.setValueAtTime(0.0001,audioCtx.currentTime+delay);
+  g.gain.exponentialRampToValueAtTime(volume,audioCtx.currentTime+delay+.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+delay+duration);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime+delay);o.stop(audioCtx.currentTime+delay+duration+.02);
+}
+function bgmNote(freq,duration=.13,type="square",volume=.012){
+  if(!bgmOn||!audioCtx)return;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  const now=audioCtx.currentTime;
+  o.type=type;o.frequency.setValueAtTime(freq,now);
+  g.gain.setValueAtTime(0.0001,now);
+  g.gain.exponentialRampToValueAtTime(volume,now+.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,now+duration);
+  o.connect(g);g.connect(audioCtx.destination);o.start(now);o.stop(now+duration+.01);
+}
+// 有名曲そのものではなく、ゲーム用に作った軽量なオリジナル8bit BGM。
+// モードごとに雰囲気だけ変え、音声ファイルを埋め込まないので軽量。
+let currentBgmTrack="normal";
+function getBgmTrack(){
+  if(cpuMode&&cpuHardMode)return "cpuHard";
+  if(cpuMode)return "cpu";
+  if(hardMode)return "hard";
+  if(gimmickMode)return "gimmick";
+  return "normal";
+}
+function setBgmTrack(track){
+  if(track===currentBgmTrack && bgmTimer)return;
+  currentBgmTrack=track;
+  if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}
+  if(bgmOn) startBGM();
+}
+function startBGM(){
+  initAudio();
+  if(bgmTimer) return;
+  const tracks={
+    normal:{tempo:150,melody:[392,392,523,392,659,587,523,392,330,392,440,392,523,494,440,392,392,523,659,784,659,523,440,392,330,330,392,440,392,330,294,330],bass:[196,196,262,196,165,165,220,196,165,165,220,196,262,247,220,196]},
+    gimmick:{tempo:132,melody:[523,659,784,659,523,440,523,392,659,784,988,784,659,523,587,494,523,659,784,988,784,659,523,440,392,523,659,523,392,330,392,440],bass:[131,165,196,165,131,110,131,98,165,196,247,196,165,131,147,123]},
+    hard:{tempo:112,melody:[330,330,392,330,494,440,392,330,262,330,392,494,587,494,440,392,330,392,494,659,587,494,440,392,330,262,330,392,330,262,294,330],bass:[165,165,196,165,247,220,196,165,131,165,196,247,294,247,220,196]},
+    cpu:{tempo:126,melody:[440,523,659,523,440,659,784,659,392,494,587,494,392,587,698,587,440,659,880,659,523,784,988,784,440,523,659,523,392,494,587,494],bass:[220,262,330,262,220,330,392,330,196,247,294,247,196,294,349,294]},
+    cpuHard:{tempo:98,melody:[294,330,392,330,294,440,392,330,262,294,349,294,262,392,440,392,294,330,494,440,392,349,330,294,262,330,392,494,440,392,330,294],bass:[147,165,196,165,147,220,196,165,131,147,175,147,131,196,220,196]}
+  };
+  const t=tracks[currentBgmTrack]||tracks.normal;
+  bgmStep=0;
+  bgmTimer=setInterval(()=>{
+    if(!bgmOn||!audioCtx)return;
+    const m=t.melody[bgmStep%t.melody.length];
+    bgmNote(m,.095,"square",.0085);
+    if(bgmStep%2===0) bgmNote(t.bass[(bgmStep/2)%t.bass.length],.17,"triangle",.0065);
+    if(bgmStep%8===7) bgmNote(m*2,.065,"square",.0045);
+    bgmStep++;
+  },t.tempo);
+}
+function stopBGM(){if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}}
+function playSound(kind){
+  if(!soundOn||!audioCtx)return;
+  if(kind==="click") tone(520,.055,"sine",.025);
+  if(kind==="move"){tone(440,.07,"triangle",.035);tone(660,.09,"triangle",.028,.055);}
+  if(kind==="wall"){tone(180,.10,"square",.025);tone(120,.13,"square",.02,.08);}
+  if(kind==="turn"){tone(330,.06,"sine",.02);tone(495,.09,"sine",.025,.07);}
+  if(kind==="win"){tone(523,.10,"triangle",.04);tone(659,.10,"triangle",.04,.11);tone(784,.18,"triangle",.045,.22);}
+  if(kind==="start"){tone(392,.08,"triangle",.03);tone(523,.08,"triangle",.035,.08);tone(784,.18,"triangle",.04,.16);}
+}
+function selectTitleMode(kind){
+  const isCpu=kind==="cpu"||kind==="cpuNormal"||kind==="cpuHard";
+  cpuMode=isCpu;
+  onlineMode=kind==="online";
+  cpuHardMode=kind==="cpuHard";
+  hardMode=kind==="hard"||kind==="cpuHard";
+  gimmickMode=kind==="gimmick";
+  [localBtn,cpuBtn,onlineBtn].forEach(b=>b.classList.remove("active"));
+  [normalBtn,hardBtn,gimmickBtn,cpuNormalBtn,cpuHardBtn].forEach(b=>b.classList.remove("active"));
+  if(isCpu){
+    cpuBtn.classList.add("active");
+    (cpuHardMode?cpuHardBtn:cpuNormalBtn).classList.add("active");
+  }else if(onlineMode){
+    onlineBtn.classList.add("active");
+  }else{
+    localBtn.classList.add("active");
+    ({normal:normalBtn,hard:hardBtn,gimmick:gimmickBtn}[kind]).classList.add("active");
+  }
+  localModePanel.classList.toggle("hiddenPanel",isCpu||onlineMode);
+  cpuModePanel.classList.toggle("hiddenPanel",!isCpu);
+  onlinePanel.classList.toggle("hiddenPanel",!onlineMode);
+  timerBox.classList.toggle("hidden",!hardMode);
+  abilityBox.classList.toggle("hidden",!gimmickMode);
+  const hints={normal:"ノーマル：従来ルール",hard:"ハード：1ターン10秒の時間制限",gimmick:"ギミック：マスに入ると能力を獲得",cpuNormal:"CPUノーマル：賢いCPUと対戦",cpuHard:"CPUハード：賢いCPU＋1ターン10秒",cpu:"CPUノーマル：賢いCPUと対戦",online:"オンライン：Roomを作って友達と対戦"};
+  modeHint.textContent=hints[kind]||hints.cpuNormal;
+  if(!onlineMode){roomCreateBox.classList.add("hiddenPanel");roomJoinBox.classList.add("hiddenPanel");onlineStatusEl.textContent="オンラインモードを選択してください。";}
+  currentBgmTrack=getBgmTrack();
+  if(bgmTimer) setBgmTrack(currentBgmTrack);
+  playSound("click");
+}
+localBtn.addEventListener("click",()=>selectTitleMode("normal"));
+normalBtn.addEventListener("click",()=>selectTitleMode("normal"));
+hardBtn.addEventListener("click",()=>selectTitleMode("hard"));
+gimmickBtn.addEventListener("click",()=>selectTitleMode("gimmick"));
+cpuBtn.addEventListener("click",()=>selectTitleMode("cpuNormal"));
+cpuNormalBtn.addEventListener("click",()=>selectTitleMode("cpuNormal"));
+cpuHardBtn.addEventListener("click",()=>selectTitleMode("cpuHard"));
+onlineBtn.addEventListener("click",()=>selectTitleMode("online"));
+
+function selectOnlineMode(kind){
+  if(onlineRole!=="host"||onlineGameStarted)return;
+  onlineSelectedMode=kind;
+  [onlineNormalBtn,onlineGimmickBtn,onlineHardBtn].forEach(b=>b.classList.remove("active"));
+  ({normal:onlineNormalBtn,gimmick:onlineGimmickBtn,hard:onlineHardBtn}[kind]).classList.add("active");
+  if(kind==="hard"){hardMode=true;gimmickMode=false;}
+  else if(kind==="gimmick"){hardMode=false;gimmickMode=true;}
+  else {hardMode=false;gimmickMode=false;}
+  const label={normal:"ノーマル",gimmick:"ギミック",hard:"ハード"}[kind];
+  onlineStatusEl.textContent=onlineConnected?`「${label}」を選択しました。対戦を開始します。`:`「${label}」を選択しました。友達の参加を待っています。`;
+  currentBgmTrack=getBgmTrack();
+  if(bgmTimer) setBgmTrack(currentBgmTrack);
+  if(onlineConnected){sendOnline({type:"config",mode:kind});startOnlineGame();}
+  playSound("click");
+}
+function makeRoomCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code="";
+  for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+const PEER_CONFIG={host:"0.peerjs.com",port:443,path:"/",secure:true};
+
+function clearOnlineRematchTimer(){
+  if(onlineRematchTimer){clearTimeout(onlineRematchTimer);onlineRematchTimer=null;}
+}
+function resetOnlineRematch(){
+  clearOnlineRematchTimer();
+  onlineRematch={host:false,guest:false};
+  rematchBtn.disabled=false;
+  rematchBtn.classList.add("hiddenPanel");
+  rematchInfo.classList.add("hidden");
+}
+function resetOnlineConnection(){
+  clearOnlineRematchTimer();
+  try{if(conn)conn.close();}catch(e){}
+  try{if(peer)peer.destroy();}catch(e){}
+  conn=null;peer=null;onlineConnected=false;onlineGameStarted=false;
+  onlineRole=null;onlineRoomCode="";onlineSelectedMode="normal";
+  onlineRematch={host:false,guest:false};
+}
+
+// 参考ファイルと同じ方式：6文字のルームコードをPeerJSのIDとして使う。
+// すでに同じIDが存在した場合だけ新しいコードで再試行する。
+function createHostPeer(attempt=0){
+  if(!onlineMode||onlineRole!=="host")return;
+  if(attempt>=8){
+    onlineStatusEl.textContent="ルームを作成できませんでした。もう一度お試しください。";
+    return;
+  }
+  const code=makeRoomCode();
+  onlineRoomCode=code;
+  roomCodeEl.textContent=code;
+  onlineStatusEl.textContent=`ルームを作成中… (${attempt+1}/8)`;
+  try{
+    peer=new Peer(code,PEER_CONFIG);
+    peer.on("open",id=>{
+      onlineRoomCode=id;
+      roomCodeEl.textContent=id;
+      onlineStatusEl.textContent="ルーム作成完了！この6文字のコードを友達に送ってください。";
+    });
+    peer.on("connection",c=>{
+      if(conn){c.close();return;}
+      bindConnection(c);
+    });
+    peer.on("error",err=>{
+      console.log("PeerJS host error",err);
+      if(err&&err.type==="unavailable-id"){
+        try{peer.destroy();}catch(e){}
+        peer=null;
+        setTimeout(()=>createHostPeer(attempt+1),250);
+      }else if(err&&err.type==="network"){
+        onlineStatusEl.textContent="PeerJSサーバーへ接続できません。インターネット接続を確認してください。";
+      }else{
+        onlineStatusEl.textContent=`ルーム作成に失敗しました：${err&&err.type?err.type:"接続エラー"}`;
+      }
+    });
+    peer.on("disconnected",()=>{
+      if(!onlineConnected){
+        onlineStatusEl.textContent="サーバーとの接続が切れました。再接続しています…";
+        try{peer.reconnect();}catch(e){}
+      }
+    });
+  }catch(err){
+    console.log("PeerJS host exception",err);
+    setTimeout(()=>createHostPeer(attempt+1),250);
+  }
+}
+
+function bindConnection(c){
+  conn=c;
+  conn.on("open",()=>{
+    onlineConnected=true;
+    playSound("start");startBGM();
+    if(onlineRole==="host"){
+      onlineStatusEl.textContent="友達が参加しました。選択したゲームモードで対戦を開始します。";
+      sendOnline({type:"config",mode:onlineSelectedMode});
+      startOnlineGame();
+    }else{
+      onlineStatusEl.textContent="接続しました。ルーム作成者がゲームモードを選択するのを待っています。";
+    }
+  });
+  conn.on("data",data=>handleOnlineData(data));
+  conn.on("close",()=>{
+    onlineConnected=false;
+    if(!gameOver)statusEl.textContent="⚠️ 友達との接続が切れました。";
+  });
+  conn.on("error",()=>{
+    onlineConnected=false;
+    onlineStatusEl.textContent="接続に失敗しました。コードを確認してください。";
+  });
+}
+
+function showGameEndActions(){
+  titleReturnBtn.classList.remove("hiddenPanel");
+  surrenderBtn.classList.add("hiddenPanel");
+  rematchBtn.classList.toggle("hiddenPanel",!onlineMode);
+  rematchInfo.classList.toggle("hidden",!onlineMode);
+  if(onlineMode){rematchBtn.textContent="🔁 もう一度";rematchBtn.disabled=false;}
+}
+function hideGameEndActions(){
+  // 「タイトルへ戻る」はゲーム中も常に表示する。
+  titleReturnBtn.classList.remove("hiddenPanel");
+  surrenderBtn.disabled=false;
+  surrenderBtn.classList.toggle("hiddenPanel",!onlineMode||gameOver);
+  rematchBtn.classList.add("hiddenPanel");
+  rematchInfo.classList.add("hidden");
+}
+function finishGame(winnerIndex,message){
+  gameOver=true;clearTurnTimer();cpuTurnToken++;render();playSound("win");
+  statusEl.classList.add("winStatus");
+  statusEl.innerHTML=`<span class="winIcon">🏆</span><span>${message||`P${winnerIndex+1}の勝利！`}</span>`;
+  showGameEndActions();
+  if(onlineMode&&onlineRole==="host")syncOnlineState();
+  if(onlineMode)beginOnlineRematchWindow();
+}
+function beginOnlineRematchWindow(){
+  if(!onlineMode)return;
+  clearOnlineRematchTimer();
+  rematchBtn.classList.remove("hiddenPanel");
+  rematchInfo.classList.remove("hidden");
+  rematchBtn.disabled=false;
+  let left=5;
+  const update=()=>{rematchInfo.textContent=`「もう一度」を5秒以内に両者が押すと再戦します。残り${left}秒`;};
+  update();
+  const tick=setInterval(()=>{left--;if(left>0)update();else clearInterval(tick);},1000);
+  onlineRematchTimer=setTimeout(()=>{
+    clearInterval(tick);
+    if(!onlineRematch.host||!onlineRematch.guest){
+      sendOnline({type:"returnTitle"});
+      returnToTitle(true);
+    }
+  },5000);
+}
+function returnToTitle(closeOnline=true){
+  // タイトルへ戻るときは、現在のゲームを完全終了してページを再読み込みする。
+  // これによりCPUの予約処理・タイマー・演出・モード状態などをすべて初期状態に戻す。
+  cpuTurnToken++;cpuThinking=false;clearTurnTimer();clearOnlineRematchTimer();
+  if(closeOnline){
+    try{if(conn&&onlineConnected)conn.send({type:"returnTitle"});}catch(e){}
+    try{if(conn)conn.close();}catch(e){}
+    try{if(peer)peer.destroy();}catch(e){}
+  }
+  setTimeout(()=>location.reload(),80);
+}
+function restartOnlineMatch(){
+  if(!onlineMode||!onlineConnected||!onlineRole)return;
+  clearOnlineRematchTimer();onlineRematch={host:false,guest:false};rematchBtn.disabled=false;
+  if(onlineRole==="host"){
+    initGameState();onlineGameStarted=true;titleScreen.classList.add("hidden");document.body.classList.add("game-started");hideGameEndActions();statusEl.textContent="再戦開始！P1の番です。";render();startTurnTimer();syncOnlineState();
+  }else{
+    statusEl.textContent="再戦の開始を待っています…";
+  }
+}
+function handleRematchClick(){
+  if(!onlineMode||!gameOver||!onlineConnected||!onlineRole)return;
+  onlineRematch[onlineRole]=true;
+  rematchBtn.disabled=true;
+  rematchInfo.textContent="再戦希望を送信しました。相手を待っています…";
+  sendOnline({type:"rematch",player:onlineRole});
+  if(onlineRematch.host&&onlineRematch.guest)restartOnlineMatch();
+}
+function handleSurrender(){
+  if(!onlineMode||gameOver||!onlineConnected)return;
+  if(onlineRole==="guest"){
+    sendOnline({type:"surrender",player:1});
+    surrenderBtn.disabled=true;
+    statusEl.textContent="🏳️ 降参しました。結果を待っています…";
+    return;
+  }
+  finishGame(1,"🏳️ P1が降参！ P2の勝利！");
+}
+function startOnlineGame(){
+  if(!onlineConnected||onlineGameStarted)return;
+  onlineGameStarted=true;
+  timerBox.classList.toggle("hidden",!hardMode);
+  abilityBox.classList.toggle("hidden",!gimmickMode);
+  initGameState();
+  hideGameEndActions();
+  titleScreen.classList.add("hidden");
+  document.body.classList.add("game-started");
+  statusEl.textContent=onlineRole==="host"?"P1の番です。友達はP2として参加しています。":"P1の番です。友達（P1）の番を待っています。";
+  render();
+  if(onlineRole==="host")syncOnlineState();
+}
+function serializeState(){return {players:players.map(p=>({r:p.r,c:p.c,walls:p.walls})),turn,gameOver};}
+function applyState(state){
+  players=state.players.map(p=>({r:p.r,c:p.c,walls:p.walls}));turn=state.turn;gameOver=state.gameOver;mode="move";wallStart=null;pressCell=null;dragging=false;hoverCell=null;render();
+  if(gameOver)return;
+  statusEl.textContent=onlineRole==="host"?(turn===0?"P1の番です。":"P2の番です."):(turn===1?"あなた（P2）の番です。":"P1の番を待っています。");
+}
+function sendOnline(data){
+  if(conn&&onlineConnected){try{conn.send(data);}catch(e){console.log("send error",e);}}
+}
+function initGameState(){
+  clearTurnTimer();
+  statusEl.classList.remove("winStatus");
+  statusEl.textContent="";
+  players=[{r:0,c:Math.floor(N/2),walls:7},{r:N-1,c:Math.floor(N/2),walls:7}];turn=0;gameOver=false;mode="move";wallStart=null;pressCell=null;dragging=false;hoverCell=null;
+  abilities=[null,null];gimmicks=[];if(gimmickMode)setupGimmicks();
+  if(onlineMode)resetOnlineRematch();
+  for(let r=0;r<N-1;r++)for(let c=0;c<N;c++)wallsH[r][c]=false;
+  for(let r=0;r<N;r++)for(let c=0;c<N-1;c++)wallsV[r][c]=false;
+}
+function handleOnlineData(data){
+  if(data.type==="config"&&onlineRole==="guest"){
+    onlineSelectedMode=data.mode||"normal";
+    hardMode=onlineSelectedMode==="hard";
+    gimmickMode=onlineSelectedMode==="gimmick";
+    timerBox.classList.toggle("hidden",!hardMode);
+    abilityBox.classList.toggle("hidden",!gimmickMode);
+    onlineStatusEl.textContent=`ルーム作成者が「${hardMode?"ハード":gimmickMode?"ギミック":"ノーマル"}」を選択しました。対戦開始！`;
+    currentBgmTrack=getBgmTrack();
+    if(bgmTimer)setBgmTrack(currentBgmTrack);
+    playSound("start");
+    startOnlineGame();
+  }else if(data.type==="state"){
+    applyFullOnlineState(data.state);
+  }else if(data.type==="action"&&onlineRole==="host"){
+    if(gameOver||turn!==data.player)return;
+    if(data.kind==="move")tryMove(data.r,data.c,true);
+    if(data.kind==="wall")placeWallFrom(data.a,data.b,true);
+  }else if(data.type==="surrender"&&onlineRole==="host"){
+    if(!gameOver)finishGame(0,"🏳️ P2が降参！ P1の勝利！");
+  }else if(data.type==="rematch"){
+    if(data.player!=="host"&&data.player!=="guest")return;
+    onlineRematch[data.player]=true;
+    if(onlineRematch.host&&onlineRematch.guest)restartOnlineMatch();
+    else if(onlineRole==="guest"&&onlineRematch.host)statusEl.textContent="ホストが再戦を希望しています。あなたも「もう一度」を押してください。";
+  }else if(data.type==="returnTitle"){
+    if(onlineRole==="host")sendOnline({type:"returnTitle"});
+    returnToTitle(true);
+  }
+}
+function serializeFullOnlineState(){
+  return {base:serializeState(),wallsH:wallsH.map(row=>row.slice()),wallsV:wallsV.map(row=>row.slice()),mode:{hard:hardMode,gimmick:gimmickMode},abilities:abilities.slice(),gimmicks:gimmicks.map(g=>({...g}))};
+}
+function applyFullOnlineState(state){
+  if(state.mode){
+    hardMode=!!state.mode.hard;gimmickMode=!!state.mode.gimmick;
+    timerBox.classList.toggle("hidden",!hardMode);abilityBox.classList.toggle("hidden",!gimmickMode);
+  }
+  if(state.abilities)abilities=state.abilities.slice();
+  if(state.gimmicks)gimmicks=state.gimmicks.map(g=>({...g}));
+  onlineGameStarted=true;
+  players=state.base.players.map(p=>({r:p.r,c:p.c,walls:p.walls}));
+  turn=state.base.turn;gameOver=state.base.gameOver;
+  for(let r=0;r<N-1;r++)for(let c=0;c<N;c++)wallsH[r][c]=!!state.wallsH[r][c];
+  for(let r=0;r<N;r++)for(let c=0;c<N-1;c++)wallsV[r][c]=!!state.wallsV[r][c];
+  mode="move";wallStart=null;pressCell=null;dragging=false;hoverCell=null;
+  titleScreen.classList.add("hidden");document.body.classList.add("game-started");
+  render();
+  if(gameOver){statusEl.textContent="対戦終了";showGameEndActions();beginOnlineRematchWindow();}
+  else{hideGameEndActions();statusEl.textContent=onlineRole==="host"?(turn===0?"P1の番です。":"P2の番です."):(turn===1?"あなた（P2）の番です。":"P1の番を待っています。");startTurnTimer();}
+}
+function syncOnlineState(){sendOnline({type:"state",state:serializeFullOnlineState()});}
+
+createRoomBtn.addEventListener("click",e=>{
+  e.preventDefault();e.stopPropagation();
+  if(typeof Peer==="undefined"){
+    onlineStatusEl.textContent="PeerJSの読み込みに失敗しました。インターネット接続を確認してください。";
+    return;
+  }
+  resetOnlineConnection();
+  onlineMode=true;onlineRole="host";onlineGameStarted=false;
+  roomCreateBox.classList.remove("hiddenPanel");roomJoinBox.classList.add("hiddenPanel");
+  onlineStatusEl.textContent="ルームを作成中…";
+  selectOnlineMode(onlineSelectedMode);
+  createHostPeer();
+});
+joinRoomBtn.addEventListener("click",()=>{
+  roomJoinBox.classList.remove("hiddenPanel");roomCreateBox.classList.add("hiddenPanel");
+  onlineStatusEl.textContent="6文字のルームコードを入力してください。ゲームモードはルーム作成者が決めます。";
+  roomInput.focus();
+});
+onlineNormalBtn.addEventListener("click",()=>selectOnlineMode("normal"));
+onlineGimmickBtn.addEventListener("click",()=>selectOnlineMode("gimmick"));
+onlineHardBtn.addEventListener("click",()=>selectOnlineMode("hard"));
+connectRoomBtn.addEventListener("click",e=>{
+  e.preventDefault();e.stopPropagation();
+  const code=roomInput.value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){onlineStatusEl.textContent="6文字のルームコードを入力してください。";return;}
+  if(typeof Peer==="undefined"){onlineStatusEl.textContent="PeerJSの読み込みに失敗しました。インターネット接続を確認してください。";return;}
+  resetOnlineConnection();onlineMode=true;onlineRole="guest";onlineStatusEl.textContent="ルームに接続中…";
+  try{
+    peer=new Peer(undefined,PEER_CONFIG);
+    peer.on("open",()=>{
+      const c=peer.connect(code,{reliable:true});
+      bindConnection(c);
+    });
+    peer.on("error",err=>{
+      console.log("PeerJS guest error",err);
+      onlineStatusEl.textContent=err&&err.type==="peer-unavailable"?"ルームが見つかりません。コードを確認してください。":"接続に失敗しました。インターネット接続を確認してください。";
+    });
+  }catch(err){console.log(err);onlineStatusEl.textContent="接続に失敗しました。インターネット接続を確認してください。";}
+});
+
+startBtn.addEventListener("click",(e)=>{e.preventDefault();e.stopPropagation();initAudio();
+  if(onlineMode){onlineStatusEl.textContent="先に「ルームを作る」または「ルームに参加」を選んでください。";return;}
+  playSound("start");currentBgmTrack=getBgmTrack();startBGM();titleScreen.classList.add("hidden");document.body.classList.add("game-started");initGameState();hideGameEndActions();statusEl.textContent=cpuMode?(cpuHardMode?"P1の番です。CPUハード：10秒以内に行動してください。":"P1の番です。CPUノーマルと対戦します。"):hardMode?"P1の番です。10秒以内に行動してください。":gimmickMode?"P1の番です。ギミックを探しながら進みましょう。":"P1の番です。移動するか「壁を描く」を選んでください。";render();updateAbilityUI();startTurnTimer();
+});
+soundBtn.addEventListener("click",()=>{initAudio();soundOn=!soundOn;soundBtn.textContent=soundOn?"🔊 ON":"🔇 OFF";if(soundOn)playSound("click");});
+bgmBtn.addEventListener("click",()=>{initAudio();bgmOn=!bgmOn;bgmBtn.textContent=bgmOn?"🎵 BGM ON":"🔇 BGM OFF";if(bgmOn){startBGM();playSound("click");}else stopBGM();});
+
+let players=[
+  {r:0,c:Math.floor(N/2),walls:7},
+  {r:N-1,c:Math.floor(N/2),walls:7}
+];
+let turn=0;
+let gameOver=false;
+let mode="move";
+let wallStart=null;
+let pressCell=null;
+let dragging=false;
+let movedPointer=false;
+let hoverCell=null;
+
+// H[r][c] = 行 r と r+1 の間、列 c の境界を塞ぐ横壁
+// V[r][c] = 列 c と c+1 の間、行 r の境界を塞ぐ縦壁
+const wallsH=Array.from({length:N-1},()=>Array(N).fill(false));
+const wallsV=Array.from({length:N},()=>Array(N-1).fill(false));
+
+function inside(r,c){return r>=0&&r<N&&c>=0&&c<N;}
+function key(r,c){return r+","+c;}
+
+function blocked(r,c,nr,nc){
+  if(!inside(nr,nc)) return true;
+  if(nr===r-1) return !!wallsH[r-1][c];
+  if(nr===r+1) return !!wallsH[r][c];
+  if(nc===c-1) return !!wallsV[r][c-1];
+  if(nc===c+1) return !!wallsV[r][c];
+  return true;
+}
+
+// 壁を置く場所による制限はしない。
+// ただし「2マス分」が盤面からはみ出さない場所だけ有効。
+function wallInfo(a,b){
+  if(!a||!b)return null;
+  const dr=b.r-a.r,dc=b.c-a.c;
+  if(Math.abs(dr)+Math.abs(dc)!==1)return null;
+
+  if(dc!==0){
+    // 左右に2マス分の横壁を描く。
+    const c=Math.min(a.c,b.c);
+    // 上端の外側には壁を置かず、選んだ2マスの「下側」に置く。
+    const r=(a.r===N-1)?N-1:a.r+1;
+    if(r<1||r>N-1||c<0||c+1>=N)return null;
+    return {type:"h",r,c};
+  }
+
+  // 上下に2マス分の縦壁を描く。
+  const r=Math.min(a.r,b.r);
+  // 左端の外側には壁を置かず、選んだ2マスの「右側」に置く。
+  const c=(a.c===N-1)?N-1:a.c+1;
+  if(c<1||c>N-1||r<0||r+1>=N)return null;
+  return {type:"v",r,c};
+}
+
+function wallIsFree(info){
+  // 壁の重なりは許可する。通路を完全に塞ぐ場合だけ禁止する。
+  return !!info;
+}
+
+// 指定プレイヤーがゴールまで到達できるかを確認する。
+// 壁を置くことで相手のルートが完全になくなる場合だけ、その壁を禁止する。
+function hasPath(playerIndex){
+  const p=players[playerIndex];
+  const goalRow=playerIndex===0?N-1:0;
+  const q=[[p.r,p.c]];
+  const seen=Array.from({length:N},()=>Array(N).fill(false));
+  seen[p.r][p.c]=true;
+
+  for(let i=0;i<q.length;i++){
+    const [r,c]=q[i];
+    if(r===goalRow)return true;
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr=r+dr,nc=c+dc;
+      if(!inside(nr,nc)||seen[nr][nc]||blocked(r,c,nr,nc))continue;
+      seen[nr][nc]=true;
+      q.push([nr,nc]);
+    }
+  }
+  return false;
+}
+
+function canPlaceWall(info){
+  if(!info)return false;
+
+  // 現在の壁状態を保存して仮置きする。
+  const changed=[];
+  if(info.type==="h"){
+    const r=info.r-1;
+    for(const c of [info.c,info.c+1]){
+      if(!wallsH[r][c]){wallsH[r][c]=true;changed.push(["h",r,c]);}
+    }
+  }else{
+    const c=info.c-1;
+    for(const r of [info.r,info.r+1]){
+      if(!wallsV[r][c]){wallsV[r][c]=true;changed.push(["v",r,c]);}
+    }
+  }
+
+  // 相手の進路だけは必ず残す。
+  const opponent=1-turn;
+  const ok=hasPath(opponent);
+
+  // 仮置きを元に戻す。
+  for(const [type,r,c] of changed){
+    if(type==="h")wallsH[r][c]=false;
+    else wallsV[r][c]=false;
+  }
+  return ok;
+}
+
+function canPlaceWallForPlayer(info, playerIndex){
+  if(!info)return false;
+  const changed=[];
+  if(info.type==="h"){
+    const r=info.r-1;
+    for(const c of [info.c,info.c+1]){
+      if(!wallsH[r][c]){wallsH[r][c]=true;changed.push(["h",r,c]);}
+    }
+  }else{
+    const c=info.c-1;
+    for(const r of [info.r,info.r+1]){
+      if(!wallsV[r][c]){wallsV[r][c]=true;changed.push(["v",r,c]);}
+    }
+  }
+  const ok=hasPath(1-playerIndex);
+  for(const [type,r,c] of changed){
+    if(type==="h")wallsH[r][c]=false;
+    else wallsV[r][c]=false;
+  }
+  return ok;
+}
+
+function applyWall(info){
+  if(info.type==="h"){
+    wallsH[info.r-1][info.c]=true;
+    wallsH[info.r-1][info.c+1]=true;
+  }else{
+    wallsV[info.r][info.c-1]=true;
+    wallsV[info.r+1][info.c-1]=true;
+  }
+}
+
+function cellAt(r,c){
+  return board.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function clearWallMarks(){
+  board.querySelectorAll(".wall-start,.wall-target,.wall-invalid,.preview").forEach(el=>el.classList.remove("wall-start","wall-target","wall-invalid"));
+  board.querySelectorAll(".preview").forEach(el=>el.remove());
+}
+
+function drawPreview(info){
+  if(!info)return;
+  const positions=info.type==="h"
+    ? [[info.r-1,info.c],[info.r-1,info.c+1]]
+    : [[info.r,info.c-1],[info.r+1,info.c-1]];
+  for(const [r,c] of positions){
+    const cell=cellAt(r,c);
+    if(!cell)continue;
+    const p=document.createElement("div");
+    p.className="preview "+info.type;
+    cell.appendChild(p);
+  }
+}
+
+function updateWallPreview(start,target){
+  clearWallMarks();
+  if(start){
+    const s=cellAt(start.r,start.c);
+    if(s)s.classList.add("wall-start");
+  }
+  if(!start||!target)return;
+  const t=cellAt(target.r,target.c);
+  const info=wallInfo(start,target);
+  if(!info || !canPlaceWall(info)){if(t)t.classList.add("wall-invalid");return;}
+  if(t)t.classList.add("wall-target");
+  drawPreview(info);
+}
+
+function render(){
+  board.innerHTML="";
+  for(let r=0;r<N;r++){
+    for(let c=0;c<N;c++){
+      const cell=document.createElement("div");
+      cell.className="cell";
+      cell.dataset.r=r;
+      cell.dataset.c=c;
+
+      const gm=gimmicks.find(g=>g.r===r&&g.c===c);
+      if(gm){
+        cell.classList.add("gimmickCell");
+        const gi=document.createElement("div");gi.className="gimmickIcon";
+        // 未発見のギミックはすべて「？」。発見後だけ正体を表示する。
+        gi.textContent=gm.revealed?(gm.type==="warp"?"🌀":"🧊"):"？";
+        cell.appendChild(gi);
+      }
+      const pi=players.findIndex(p=>p.r===r&&p.c===c);
+      if(pi!==-1){
+        const piece=document.createElement("div");
+        piece.className="piece "+(pi===0?"p1":"p2");
+        if(pendingPieceAnim===pi)piece.classList.add("enter");
+        piece.textContent=pi===0?"P1":"P2";
+        cell.appendChild(piece);
+      }
+
+      // 2マス分の壁は隣り合う2つの境界セグメントとして描画する。各セグメントは1マス幅なので、合計ちょうど2マス分になる。
+      if(r<N-1&&wallsH[r][c]){
+        const w=document.createElement("div");
+        w.className="wall h";
+        if(pendingWallAnim&&pendingWallAnim.type==="h"&&pendingWallAnim.r-1===r&&(pendingWallAnim.c===c||pendingWallAnim.c+1===c))w.classList.add("enter");
+        cell.appendChild(w);
+      }
+      if(c<N-1&&wallsV[r][c]){
+        const w=document.createElement("div");
+        w.className="wall v";
+        if(pendingWallAnim&&pendingWallAnim.type==="v"&&pendingWallAnim.c-1===c&&(pendingWallAnim.r===r||pendingWallAnim.r+1===r))w.classList.add("enter");
+        cell.appendChild(w);
+      }
+      board.appendChild(cell);
+    }
+  }
+
+  w1El.textContent=players[0].walls;
+  w2El.textContent=players[1].walls;
+  turnText.textContent=gameOver?"終了":`P${turn+1}`;
+  turnText.className=turn===0?"p1":"p2";
+  moveBtn.classList.toggle("active",mode==="move");
+  wallBtn.classList.toggle("active",mode==="wall");
+  cancelBtn.disabled=mode!=="wall"||!wallStart;
+
+  if(mode==="wall"&&wallStart)updateWallPreview(wallStart,hoverCell);
+  pendingPieceAnim=-1;
+  pendingWallAnim=null;
+}
+
+function setupGimmicks(){
+  // ギミックは全モード共通。最初は「？」で正体を隠す。
+  // ワープは2組、氷床は2マス。スタート地点とゴール付近は避ける。
+  const pool=[];
+  for(let r=2;r<N-2;r++)for(let c=0;c<N;c++){
+    if((r===Math.floor(N/2)||r===Math.floor(N/2)-1)&&c===Math.floor(N/2))continue;
+    pool.push({r,c});
+  }
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const chosen=pool.slice(0,8);
+  // warpId が同じ2マスで1組。ice は踏んだ方向へ1マス余計に滑る。
+  for(let i=0;i<4;i++)gimmicks.push({...chosen[i],type:"warp",warpId:i<2?0:1,revealed:false});
+  for(let i=4;i<6;i++)gimmicks.push({...chosen[i],type:"ice",revealed:false});
+}
+function collectGimmick(playerIndex,r,c,dr=0,dc=0){
+  if(!gimmickMode)return null;
+  const idx=gimmicks.findIndex(g=>g.r===r&&g.c===c);
+  if(idx<0)return null;
+  const g=gimmicks[idx];
+  g.revealed=true;
+  const name=g.type==="warp"?"🌀 ワープ":"🧊 氷床";
+  statusEl.textContent=`P${playerIndex+1}：${name}を発見！`;
+  playSound("win");
+
+  if(g.type==="warp"){
+    const pair=gimmicks.find(x=>x!==g&&x.type==="warp"&&x.warpId===g.warpId);
+    if(pair){
+      pair.revealed=true;
+      // ワープ先に相手がいる場合は移動せず、発見だけ公開する。
+      const other=players[1-playerIndex];
+      if(!(other.r===pair.r&&other.c===pair.c)){
+        players[playerIndex].r=pair.r;players[playerIndex].c=pair.c;
+        return {type:"warp",dr:0,dc:0};
+      }
+    }
+  }
+
+  if(g.type==="ice" && (dr!==0||dc!==0)){
+    const p=players[playerIndex];
+    const nr=p.r+dr,nc=p.c+dc;
+    const other=players[1-playerIndex];
+    if(inside(nr,nc)&&!blocked(p.r,p.c,nr,nc)&&!(other.r===nr&&other.c===nc)){
+      p.r=nr;p.c=nc;
+      return {type:"ice",dr:dr,dc:dc};
+    }
+    return {type:"ice",dr:0,dc:0};
+  }
+  return {type:g.type,dr:0,dc:0};
+}
+function updateAbilityUI(){
+  if(!gimmickMode){abilityText.textContent="なし";return;}
+  const a=abilities[turn];
+  abilityText.textContent=a==="warp"?"🌀 ワープ":"なし";
+}
+function clearTurnTimer(){if(timerId){clearInterval(timerId);timerId=null;}timerBox.classList.remove("timerDanger");}
+function startTurnTimer(){
+  clearTurnTimer();
+  if(!hardMode||gameOver)return;
+  timeLeft=10;timerText.textContent=timeLeft;timerBox.classList.remove("timerDanger");
+  timerId=setInterval(()=>{
+    if(gameOver){clearTurnTimer();return;}
+    timeLeft--;timerText.textContent=timeLeft;
+    timerBox.classList.toggle("timerDanger",timeLeft<=3);
+    if(timeLeft<=0){
+      clearTurnTimer();
+      if(onlineMode&&onlineRole!=="host"){
+        statusEl.textContent="⏱️ 時間切れを待っています…";
+        return;
+      }
+      playSound("turn");
+      statusEl.textContent=`⏱️ P${turn+1}の時間切れ！ターン交代です。`;
+      nextTurn();
+    }
+  },1000);
+}
+function nextTurn(message){
+  clearTurnTimer();
+  wallStart=null;pressCell=null;dragging=false;movedPointer=false;hoverCell=null;
+  turn=1-turn;
+  playSound("turn");
+  mode="move";
+  statusEl.classList.remove("winStatus");
+  surrenderBtn.classList.toggle("hiddenPanel",!onlineMode||gameOver);
+  updateAbilityUI();
+  render();
+  statusEl.textContent=message||`P${turn+1}の番です。移動するか「壁を描く」を選んでください。`;
+  startTurnTimer();
+  if(onlineMode&&onlineRole==="host")syncOnlineState();
+  if(cpuMode && turn===1 && !gameOver){const token=cpuTurnToken;setTimeout(()=>{if(token===cpuTurnToken)cpuTurn();},450);}
+}
+
+function shortestPathLength(playerIndex){
+  const p=players[playerIndex];
+  const goalRow=playerIndex===0?N-1:0;
+  const dist=Array.from({length:N},()=>Array(N).fill(Infinity));
+  const q=[[p.r,p.c]];
+  dist[p.r][p.c]=0;
+  for(let i=0;i<q.length;i++){
+    const [r,c]=q[i];
+    if(r===goalRow)return dist[r][c];
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr=r+dr,nc=c+dc;
+      if(!inside(nr,nc)||dist[nr][nc]!==Infinity||blocked(r,c,nr,nc))continue;
+      dist[nr][nc]=dist[r][c]+1;
+      q.push([nr,nc]);
+    }
+  }
+  return Infinity;
+}
+
+function cpuTurn(){
+  if(!cpuMode||turn!==1||gameOver||cpuThinking)return;
+  const myToken=++cpuTurnToken;
+  cpuThinking=true;
+  mode="move";
+  statusEl.textContent="🤖 CPUが考えています…";
+  render();
+
+  setTimeout(()=>{
+    if(myToken!==cpuTurnToken||gameOver||turn!==1){cpuThinking=false;return;}
+
+    try{
+      const cpu=players[1], human=players[0];
+      const ownBefore=shortestPathLength(1);
+      const humanBefore=shortestPathLength(0);
+
+      // まず「今すぐゴールできる移動」を探す。
+      const dirs=[[-1,0],[1,0],[0,-1],[0,1]];
+      for(const [dr,dc] of dirs){
+        const nr=cpu.r+dr,nc=cpu.c+dc;
+        if(inside(nr,nc)&&!blocked(cpu.r,cpu.c,nr,nc)&&!(human.r===nr&&human.c===nc)&&nr===0){
+          cpu.r=nr;cpu.c=nc;pendingPieceAnim=1;
+          playSound("move");cpuThinking=false;
+          finishGame(1,"🏆 CPU（P2）の勝利！");
+          return;
+        }
+      }
+
+      // 移動候補：自分のゴールまでの距離を最優先しつつ、
+      // 人間との距離関係も少し考慮する。
+      let bestMove=null;
+      for(const [dr,dc] of dirs){
+        const nr=cpu.r+dr,nc=cpu.c+dc;
+        if(!inside(nr,nc)||blocked(cpu.r,cpu.c,nr,nc))continue;
+        if(human.r===nr&&human.c===nc)continue;
+        const oldR=cpu.r,oldC=cpu.c;
+        cpu.r=nr;cpu.c=nc;
+        const ownAfter=shortestPathLength(1);
+        const humanAfter=shortestPathLength(0);
+        cpu.r=oldR;cpu.c=oldC;
+        if(ownAfter===Infinity)continue;
+        const progress=ownBefore-ownAfter;
+        const lead=humanAfter-ownAfter;
+        const score=progress*120 + lead*3 - ownAfter;
+        if(!bestMove||score>bestMove.score){bestMove={r:nr,c:nc,score,ownAfter,humanAfter};}
+      }
+
+      // 壁候補：相手の最短ルートを大きく伸ばし、自分の道を壊しにくい壁を探す。
+      let bestWall=null;
+      if(cpu.walls>0){
+        for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+          const infos=[];
+          if(c+1<N){const info=wallInfo({r,c},{r,c:c+1});if(info)infos.push(info);}
+          if(r+1<N){const info=wallInfo({r,c},{r:r+1,c});if(info)infos.push(info);}
+
+          for(const info of infos){
+            // 2本とも既に存在する壁は「新しい壁」として無視。
+            let cells;
+            if(info.type==="h"){
+              const rr=info.r-1;
+              if(rr<0||rr>=N-1||info.c<0||info.c+1>=N)continue;
+              cells=[
+                ["h",rr,info.c,wallsH[rr][info.c]],
+                ["h",rr,info.c+1,wallsH[rr][info.c+1]]
+              ];
+            }else{
+              const cc=info.c-1;
+              if(cc<0||cc>=N-1||info.r<0||info.r+1>=N)continue;
+              cells=[
+                ["v",info.r,cc,wallsV[info.r][cc]],
+                ["v",info.r+1,cc,wallsV[info.r+1][cc]]
+              ];
+            }
+            if(cells.every(x=>x[3]))continue;
+            if(!canPlaceWallForPlayer(info,1))continue;
+
+            // 元の状態を保存して仮置きし、必ず完全に復元する。
+            for(const x of cells){
+              if(x[0]==="h")wallsH[x[1]][x[2]]=true;
+              else wallsV[x[1]][x[2]]=true;
+            }
+            const humanAfter=shortestPathLength(0);
+            const ownAfter=shortestPathLength(1);
+            for(const x of cells){
+              if(x[0]==="h")wallsH[x[1]][x[2]]=x[3];
+              else wallsV[x[1]][x[2]]=x[3];
+            }
+
+            if(humanAfter===Infinity||ownAfter===Infinity)continue;
+            const humanGain=humanAfter-humanBefore;
+            const ownCost=ownAfter-ownBefore;
+            // 相手を遠回りさせる価値を高く、自分の遠回りは強く減点。
+            const score=humanGain*28-ownCost*20+(humanBefore<ownBefore?humanGain*6:0);
+            if(!bestWall||score>bestWall.score){
+              bestWall={info,score,humanGain,ownCost,humanAfter,ownAfter};
+            }
+          }
+        }
+      }
+
+      // 相手がかなりゴールに近いときは、防御壁を優先。
+      const emergency=humanBefore<=2;
+      const strongWall=bestWall && bestWall.humanGain>=2 && bestWall.ownCost<=1;
+      const usefulWall=bestWall && bestWall.humanGain>=1 && bestWall.ownCost<=0;
+      const shouldWall=bestWall && (emergency&&bestWall.humanGain>=1 || strongWall || (humanBefore<ownBefore&&usefulWall));
+
+      if(shouldWall){
+        pendingWallAnim=bestWall.info;
+        applyWall(bestWall.info);
+        cpu.walls--;
+        playSound("wall");
+        cpuThinking=false;
+        nextTurn(emergency?"🤖 CPUがゴール直前の危険を防ぎました。P1の番です。":"🤖 CPUが有利な壁を置きました。P1の番です。");
+        return;
+      }
+
+      if(bestMove){
+        cpu.r=bestMove.r;cpu.c=bestMove.c;pendingPieceAnim=1;
+        playSound("move");cpuThinking=false;
+        if(cpu.r===0){finishGame(1,"🏆 CPU（P2）の勝利！");return;}
+        nextTurn("🤖 CPUが最短ルートを選びました。P1の番です。");
+        return;
+      }
+
+      if(bestWall){
+        pendingWallAnim=bestWall.info;
+        applyWall(bestWall.info);
+        cpu.walls--;
+        playSound("wall");cpuThinking=false;
+        nextTurn("🤖 CPUが壁を使いました。P1の番です。");
+        return;
+      }
+
+      // 念のため、候補がない場合でもCPUが止まらないようにする。
+      cpuThinking=false;
+      nextTurn("CPUは有効な手を見つけられませんでした。P1の番です。");
+    }catch(err){
+      console.error("CPU error:",err);
+      cpuThinking=false;
+      // CPU思考中の例外でゲームが停止しないよう、合法な移動を1つ探して続行。
+      const cpu=players[1], human=players[0];
+      for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+        const nr=cpu.r+dr,nc=cpu.c+dc;
+        if(inside(nr,nc)&&!blocked(cpu.r,cpu.c,nr,nc)&&!(human.r===nr&&human.c===nc)){
+          cpu.r=nr;cpu.c=nc;playSound("move");
+          if(cpu.r===0){finishGame(1,"🏆 CPU（P2）の勝利！");return;}
+          nextTurn("CPUが移動しました。P1の番です.");
+          return;
+        }
+      }
+      nextTurn("CPUのターンを終了しました。P1の番です。");
+    }
+  },700);
+}
+function tryMove(r,c,fromNetwork=false){
+  if(gameOver||mode!=="move"|| (cpuMode&&turn===1))return;
+  if(onlineMode&&!fromNetwork&&onlineRole==="guest"){
+    if(turn!==1)return;
+    sendOnline({type:"action",kind:"move",player:1,r,c});
+    return;
+  }
+  const p=players[turn];
+  const dist=Math.abs(p.r-r)+Math.abs(p.c-c);
+  if(dist!==1||(r!==p.r&&c!==p.c)){
+    statusEl.textContent="移動は上下左右の1マスです。";
+    return;
+  }
+  if(blocked(p.r,p.c,r,c)){
+    statusEl.textContent="そこには壁があるため進めません。";
+    return;
+  }
+  const other=players[1-turn];
+  if(other.r===r&&other.c===c){
+    statusEl.textContent="相手がいるマスには移動できません。";
+    return;
+  }
+  const dr=r-p.r,dc=c-p.c;
+  p.r=r;p.c=c;
+  pendingPieceAnim=turn;
+
+  if(gimmickMode){
+    collectGimmick(turn,r,c,dr,dc);
+  }
+
+  playSound("move");
+  if((turn===0&&p.r===N-1)||(turn===1&&p.r===0)){
+    finishGame(turn,`🏆 P${turn+1}の勝利！`);
+    return;
+  }
+  nextTurn();
+  if(onlineMode&&onlineRole==="host")syncOnlineState();
+}
+
+function placeWallFrom(a,b,fromNetwork=false){
+  if(onlineMode&&!fromNetwork&&onlineRole==="guest"){
+    if(turn!==1||players[1].walls<=0)return false;
+    sendOnline({type:"action",kind:"wall",player:1,a,b});
+    return true;
+  }
+  const p=players[turn];
+  if(p.walls<=0){
+    statusEl.textContent="このプレイヤーは壁を使い切っています。";
+    return false;
+  }
+  const info=wallInfo(a,b);
+  if(!info){
+    statusEl.textContent="壁は盤面内の隣り合う2マスをまっすぐ選んでください。端では外側にはみ出さないようにしてください。";
+    return false;
+  }
+
+  if(!canPlaceWall(info)){
+    statusEl.textContent="⚠️ その壁を置くと相手の進路が完全に塞がってしまいます。別の場所に置いてください。";
+    render();
+    return false;
+  }
+
+  pendingWallAnim=info;
+  applyWall(info);
+  p.walls--;
+  playSound("wall");
+  const placedPlayer=turn+1;
+  nextTurn(`P${turn+1}の番です。P${placedPlayer}が壁を1枚置きました。`);
+  if(onlineMode&&onlineRole==="host")syncOnlineState();
+  return true;
+}
+
+function pointerPoint(e){
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const cell=el&&el.closest?el.closest(".cell"):null;
+  if(!cell||!board.contains(cell))return null;
+  return {r:+cell.dataset.r,c:+cell.dataset.c};
+}
+
+board.addEventListener("pointerdown",e=>{
+  if(!canLocalAct())return;
+  const point=pointerPoint(e);
+  if(!point)return;
+  e.preventDefault();
+  board.setPointerCapture?.(e.pointerId);
+
+  if(mode==="move"){
+    // 移動はpointerupではなくpointerdownで処理し、確実に1マスクリックできるようにする。
+    tryMove(point.r,point.c);
+    return;
+  }
+
+  dragging=true;
+  playSound("click");
+  movedPointer=false;
+  pressCell=point;
+  hoverCell=point;
+  if(!wallStart)updateWallPreview(point,null);
+  else updateWallPreview(wallStart,point);
+});
+
+board.addEventListener("pointermove",e=>{
+  if(gameOver||mode!=="wall"||!dragging)return;
+  const point=pointerPoint(e);
+  if(!point)return;
+  if(pressCell&&(pressCell.r!==point.r||pressCell.c!==point.c))movedPointer=true;
+  hoverCell=point;
+  updateWallPreview(wallStart||pressCell,point);
+});
+
+board.addEventListener("pointerup",e=>{
+  if(gameOver||mode!=="wall"||!dragging)return;
+  e.preventDefault();
+  const point=pointerPoint(e)||hoverCell||pressCell;
+  const start=wallStart||pressCell;
+  dragging=false;
+
+  if(!point||!start){pressCell=null;return;}
+
+  if(start.r===point.r&&start.c===point.c){
+    // クリックだけなら始点を選択して待つ。
+    if(!wallStart){
+      wallStart={r:point.r,c:point.c};
+      hoverCell=null;
+      render();
+      statusEl.textContent=`P${turn+1}：始点を選択中。隣のマスをクリックするかドラッグしてください。`;
+    }else{
+      hoverCell=null;
+      render();
+    }
+    pressCell=null;
+    return;
+  }
+
+  placeWallFrom(start,point);
+  pressCell=null;
+});
+
+board.addEventListener("pointercancel",()=>{
+  dragging=false;
+  pressCell=null;
+  movedPointer=false;
+  hoverCell=null;
+  if(mode==="wall")render();
+});
+
+moveBtn.onclick=()=>{
+  if(!canLocalAct())return;
+  mode="move";
+  wallStart=null;pressCell=null;dragging=false;hoverCell=null;
+  render();
+  statusEl.textContent=`P${turn+1}：移動モードです。上下左右に1マス動かしてください。`;
+};
+
+wallBtn.onclick=()=>{
+  if(!canLocalAct())return;
+  mode="wall";
+  wallStart=null;pressCell=null;dragging=false;hoverCell=null;
+  render();
+  statusEl.textContent=`P${turn+1}：壁モードです。2マスを横または縦に選んでください。`;
+};
+
+cancelBtn.onclick=()=>{
+  if(gameOver||mode!=="wall"|| (cpuMode&&turn===1))return;
+  wallStart=null;pressCell=null;dragging=false;hoverCell=null;
+  render();
+  statusEl.textContent=`P${turn+1}：壁の選択を取り消しました。`;
+};
+
+document.getElementById("resetBtn").onclick=()=>{
+  if(onlineMode&&onlineRole!=="host")return;
+  cpuThinking=false;cpuTurnToken++;initGameState();hideGameEndActions();render();updateAbilityUI();
+  statusEl.textContent=cpuMode?(cpuHardMode?"P1の番です。CPUハード：10秒以内に行動してください。":"P1の番です。CPUノーマルと対戦します。"):hardMode?"P1の番です。10秒以内に行動してください。":gimmickMode?"P1の番です。ギミックを探しながら進みましょう。":"P1の番です。移動するか「壁を描く」を選んでください。";
+  startTurnTimer();
+  if(onlineMode&&onlineRole==="host")syncOnlineState();
+};
+
+titleReturnBtn.addEventListener("click",e=>{
+  e.preventDefault();e.stopImmediatePropagation();
+  returnToTitle(true);
+},true);
+rematchBtn.addEventListener("click",handleRematchClick);
+surrenderBtn.addEventListener("click",handleSurrender);
+
+function canLocalAct(){
+  if(gameOver)return false;
+  if(cpuMode&&turn===1)return false;
+  if(onlineMode)return onlineConnected && ((onlineRole==="host"&&turn===0)||(onlineRole==="guest"&&turn===1));
+  return true;
+}
+
+render();
+updateAbilityUI();
+hideGameEndActions();
+window.addEventListener("beforeunload",()=>{stopBGM();clearTurnTimer();});
+window.addEventListener("beforeunload",()=>stopBGM());
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
